@@ -44,10 +44,10 @@ cmake ..
 2. In "Where is the source code", enter the path to the project
 3. In "Where to build the binaries", add a `build` directory to the project's path. CMake GUI will automatically create this directory if it does not exist
 4. At the bottom, click 'Configure' then 'Generate'. Keep the default options
-![Sélectionner le *workload* "Desktop development with C++"](docs/Multimedia/CMakeGUI.png)
+![Sélectionner le *workload* "Desktop development with C++"](docs/multimedia/CMakeGUI.png)
 
 Open `build/simulation.sln` with Visual Studio. To run the project, press Ctrl+F5 or click on the "Start without debugging" button
-![Click on the "Start without debugging" button](docs/Multimedia/VisualStudioRun.png)
+![Click on the "Start without debugging" button](docs/multimedia/VisualStudioRun.png)
 
 ## Contributing
 

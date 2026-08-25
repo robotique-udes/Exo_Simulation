@@ -17,6 +17,6 @@ Ce guide contient les instructions pour installer les dépendences nécessaires 
 2. Lancer l'installateur
 
 3. Sélectionner le *workload* "Desktop development with C++" et s'assurer que l'option "C++ CMake tools for Windows" est sélectionnée dans la barre de droite.
-![Sélectionner le *workload* "Desktop development with C++"](docs/Multimedia/VisualStudioInstaller.png)
+![Sélectionner le *workload* "Desktop development with C++"](../multimedia/VisualStudioInstaller.png)
 
 4. (Optionel) Ajouter `C:\Program Files\Microsoft Visual Studio\2026\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin` au PATH
