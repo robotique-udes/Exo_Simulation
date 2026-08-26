@@ -58,38 +58,31 @@ void ModelBuilder::addExoskeleton()
 
 void ModelBuilder::addActuators()
 {
-	// Ownerless object. Will be freed when program ends, same as in exampleHangingMuscle.cpp
-	OpenSim::CoordinateActuator* hipRight = new OpenSim::CoordinateActuator("hip_flexion_r");
-	hipRight->setName("exo_hip_r");
-	hipRight->setOptimalForce(1.0);
-	hipRight->setMinControl(-15.0);
-	hipRight->setMaxControl(15.0);
+	/**
+	 * @brief Local POD struct for attaching a CoordinateActuator to a Coordinate
+	 */
+	struct CoordinateActuatorPair
+	{
+		std::string coordinateName;
+		std::string actuatorName;
+	};
 
-	// Ownerless object. Will be freed when program ends, same as in exampleHangingMuscle.cpp
-	OpenSim::CoordinateActuator* hipLeft = new OpenSim::CoordinateActuator("hip_flexion_l");
-	hipLeft->setName("exo_hip_l");
-	hipLeft->setOptimalForce(1.0);
-	hipLeft->setMinControl(-15.0);
-	hipLeft->setMaxControl(15.0);
+	constexpr CoordinateActuatorPair pairs[] = { {"hip_flexion_r", "exo_hip_r"},
+											     {"hip_flexion_l", "exo_hip_l"},
+											     {"knee_angle_r", "exo_knee_r"}, 
+											     {"knee_angle_l", "exo_knee_l"}};
 
-	// Ownerless object. Will be freed when program ends, same as in exampleHangingMuscle.cpp
-	OpenSim::CoordinateActuator* kneeRight = new OpenSim::CoordinateActuator("knee_angle_r");
-	kneeRight->setName("exo_knee_r");
-	kneeRight->setOptimalForce(1.0);
-	kneeRight->setMinControl(-15.0);
-	kneeRight->setMaxControl(15.0);
+	for (const CoordinateActuatorPair& pair : pairs)
+	{
+		// Ownerless object. Will be freed when program ends, same as in exampleHangingMuscle.cpp
+		OpenSim::CoordinateActuator* actuator = new OpenSim::CoordinateActuator(pair.coordinateName);
+		actuator->setName(pair.actuatorName);
+		actuator->setOptimalForce(1.0);
+		actuator->setMinControl(-15.0);
+		actuator->setMaxControl(15.0);
 
-	// Ownerless object. Will be freed when program ends, same as in exampleHangingMuscle.cpp
-	OpenSim::CoordinateActuator* kneeLeft = new OpenSim::CoordinateActuator("knee_angle_l");
-	kneeLeft->setName("exo_knee_l");
-	kneeLeft->setOptimalForce(1.0);
-	kneeLeft->setMinControl(-15.0);
-	kneeLeft->setMaxControl(15.0);
-
-	m_model.addForce(hipRight);
-	m_model.addForce(hipLeft);
-	m_model.addForce(kneeRight);
-	m_model.addForce(kneeLeft);
+		m_model.addForce(actuator);
+	}
 }
 
 void ModelBuilder::addIMU()
