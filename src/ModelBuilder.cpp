@@ -53,7 +53,47 @@ void ModelBuilder::addMuscleMetabolicProbe()
 
 void ModelBuilder::addExoskeleton()
 {
+	/**
+	 * @brief Local POD struct for creating the pieces of the exoskeleton
+	 */
+	struct ExoskeletonPiece
+	{
+		std::string meshFile;
+		std::string name;
+		std::string parentBody;
 
+		double mass;
+		SimTK::Vec3 massCenter;
+		SimTK::Inertia inertia;
+
+		SimTK::Vec3 position;
+		SimTK::Vec3 orientation;
+	};
+
+	const ExoskeletonPiece PIECES[] = { {"file.stl", "name", "bodypart", 0.0, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}} };
+
+	for (const ExoskeletonPiece& piece : PIECES)
+	{
+		OpenSim::Mesh* mesh = new OpenSim::Mesh(piece.meshFile);
+		OpenSim::Body* body = new OpenSim::Body(piece.name + "_body", 
+			                                    piece.mass, 
+			                                    piece.massCenter,
+			                                    piece.inertia);
+		
+		
+		const OpenSim::Body& parent = m_model.getBodySet().get(piece.parentBody);
+		OpenSim::Joint* joint = new OpenSim::WeldJoint(piece.name + "_joint", 
+			                                           parent,
+			                                           { 0, 0, 0 }, 
+			                                           { 0, 0, 0 }, 
+			                                           *body, 
+			                                           piece.position, 
+			                                           piece.orientation);
+
+		m_model.addBody(body);
+		m_model.addJoint(joint);
+		body->attachGeometry(mesh); // Called after Model::addBody to prevent "[error] Mesh xxx.stl not connected to a model...ignoring"
+	}
 }
 
 void ModelBuilder::addActuators()
