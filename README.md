@@ -7,8 +7,9 @@
 	- [Dependencies](#dependencies)
 	- [Build](#build)
 - [Contributing](#contributing)
-	- [Folder overview](#folder-overview)
 	- [Guidelines](#guidelines)
+	- [Folder overview](#folder-overview)
+	- [Documentation](#documentation)
 
 ## Description
 
@@ -51,6 +52,10 @@ Open `build/simulation.sln` with Visual Studio. To run the project, press Ctrl+F
 
 ## Contributing
 
+### Guidelines
+
+All contributors must read and follow the [C++ guidelines](docs/articles/code_guideline.md) and the [Git guidelines](docs/articles/git_guideline.md).
+
 ### Folder overview
 
 - [src](src): C++ source files (*.cpp)
@@ -66,6 +71,10 @@ Open `build/simulation.sln` with Visual Studio. To run the project, press Ctrl+F
 	- Results: Simulation results. NOT TRACKED BY GIT
 - build: Build directory. NOT TRACKED BY GIT
 
-### Guidelines
+### Documentation
 
-All contributors must read and follow the [C++ guidelines](docs/articles/code_guideline.md) and the [Git guidelines](docs/articles/git_guideline.md).
+[OpenSim Wiki](https://opensimconfluence.atlassian.net/wiki/spaces/OpenSim/overview), the [User's Guide](https://opensimconfluence.atlassian.net/wiki/spaces/OpenSim/pages/53089849/User+s+Guide) in particular, for a general understanding of the components and tools of OpenSim.
+
+[OpenSim C++ API](https://simtk.org/api_docs/opensim/api_docs46/index.html) for detailed documentation of the classes and methods of OpenSim and SimTK.
+
+[cppreference](https://cppreference.com/) for information on the C++ language and standard library. Keep in mind this project uses <u>C++20</u>.
