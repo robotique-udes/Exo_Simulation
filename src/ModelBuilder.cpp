@@ -9,15 +9,15 @@
 #include <OpenSim/Simulation/Model/Bhargava2004MuscleMetabolicsProbe.h>
 #include <OpenSim/Actuators/CoordinateActuator.h>
 
-ModelBuilder::ModelBuilder(const std::string& filename)
+ModelBuilder::ModelBuilder(const std::string& p_filename)
 {
-	m_model = OpenSim::Model(filename);
+	m_model = OpenSim::Model(p_filename);
 }
 
-void ModelBuilder::print(const std::string& filename)
+void ModelBuilder::print(const std::string& p_filename)
 {
 	m_model.finalizeConnections();
-	m_model.print(filename);
+	m_model.print(p_filename);
 }
 
 void ModelBuilder::visualize()
@@ -67,12 +67,12 @@ void ModelBuilder::addActuators()
 		std::string actuatorName;
 	};
 
-	constexpr CoordinateActuatorPair pairs[] = { {"hip_flexion_r", "exo_hip_r"},
+	constexpr CoordinateActuatorPair PAIRS[] = { {"hip_flexion_r", "exo_hip_r"},
 											     {"hip_flexion_l", "exo_hip_l"},
 											     {"knee_angle_r", "exo_knee_r"}, 
 											     {"knee_angle_l", "exo_knee_l"}};
 
-	for (const CoordinateActuatorPair& pair : pairs)
+	for (const CoordinateActuatorPair& pair : PAIRS)
 	{
 		// Ownerless object. Will be freed when program ends, same as in exampleHangingMuscle.cpp
 		OpenSim::CoordinateActuator* actuator = new OpenSim::CoordinateActuator(pair.coordinateName);
