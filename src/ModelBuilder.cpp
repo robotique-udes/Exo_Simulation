@@ -6,6 +6,7 @@
  * @date 2026-08-25
 */
 #include "ModelBuilder.hpp"
+#include <numbers>
 #include <OpenSim/Simulation/Model/Bhargava2004MuscleMetabolicsProbe.h>
 #include <OpenSim/Actuators/CoordinateActuator.h>
 
@@ -62,15 +63,16 @@ void ModelBuilder::addExoskeleton()
 		std::string name;
 		std::string parentBody;
 
-		double mass;
-		SimTK::Vec3 massCenter;
-		SimTK::Inertia inertia;
+		double mass; // kilograms
+		SimTK::Vec3 massCenter; // meters
+		SimTK::Inertia inertia; // kilograms * meters squared
 
-		SimTK::Vec3 position;
-		SimTK::Vec3 orientation;
+		SimTK::Vec3 position; // meters
+		SimTK::Vec3 orientation; // radians
 	};
 
-	const ExoskeletonPiece PIECES[] = { {"file.stl", "name", "bodypart", 0.0, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}} };
+	using namespace std::numbers; // For easier access to pi
+	const ExoskeletonPiece PIECES[] = { {"file.stl", "name", "bodypart", 0.0, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}} };
 
 	for (const ExoskeletonPiece& piece : PIECES)
 	{
@@ -79,11 +81,8 @@ void ModelBuilder::addExoskeleton()
 			                                    piece.mass, 
 			                                    piece.massCenter,
 			                                    piece.inertia);
-		
-		
-		const OpenSim::Body& parent = m_model.getBodySet().get(piece.parentBody);
 		OpenSim::Joint* joint = new OpenSim::WeldJoint(piece.name + "_joint", 
-			                                           parent,
+			                                           m_model.getBodySet().get(piece.parentBody),
 			                                           { 0, 0, 0 }, 
 			                                           { 0, 0, 0 }, 
 			                                           *body, 
