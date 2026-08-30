@@ -10,8 +10,10 @@
 #ifndef BIOGENIUS_SIMULATION_MODEL_BUILDER_HPP
 #define BIOGENIUS_SIMULATION_MODEL_BUILDER_HPP
 
-#include <OpenSim/OpenSim.h>
+#include <OpenSim/Simulation/Model/Model.h>
 #include <OpenSim/Simulation/Model/Bhargava2004MuscleMetabolicsProbe.h>
+#include <OpenSim/Simulation/SimbodyEngine/WeldJoint.h>
+#include <OpenSim/Simulation/OpenSense/IMU.h>
 #include <OpenSim/Actuators/CoordinateActuator.h>
 #include <string>
 #include <list>
