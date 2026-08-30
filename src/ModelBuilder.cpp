@@ -11,6 +11,7 @@
 ModelBuilder::ModelBuilder(const std::string& p_filename)
 {
 	m_model = OpenSim::Model(p_filename);
+	m_model.finalizeFromProperties(); // Make sure the model has full ownership of its subcomponents
 }
 
 void ModelBuilder::print(const std::string& p_filename)
