@@ -59,9 +59,9 @@ void ModelBuilder::addExoskeleton()
 	 */
 	struct ExoskeletonPiece
 	{
-		std::string meshFile;
 		std::string name;
 		std::string parentBody;
+		std::string meshFile;
 
 		double mass; // kilograms
 		SimTK::Vec3 massCenter; // meters
@@ -72,21 +72,27 @@ void ModelBuilder::addExoskeleton()
 	};
 
 	using namespace std::numbers; // For easier access to pi
-	const ExoskeletonPiece PIECES[] = { {"file.stl", "name", "bodypart", 0.0, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}} };
+	const ExoskeletonPiece PIECES[] = { 
+		                     /* Hips */ {.name = "exo_hip", .parentBody = "pelvis", .meshFile = "pelvis.stl", .mass = 3.915, .massCenter = {-0.00025, -0.0553, -0.000616}, .inertia = {0.0232, 0.0546, 0.0669, 0.0000792, 0.0015, 0.00191}, .position = {-0.3, -0.015, 0}, .orientation = {pi / 2, -pi / 2, 0.0}},
+					  /* Right femur */ {.name = "exo_femur_r", .parentBody = "femur_r", .meshFile = "femur.stl", .mass = 2.507, .massCenter = {-0.000102, 0.0987, 0.0119}, .inertia = {0.0707, 0.00232, 0.0711, 0.000107, -0.00000677, 0.00275}, .position = {0, 0.05, 0.1}, .orientation = {0, 0, pi}},
+					  /* Right tibia */ {.name = "exo_tibia_r", .parentBody = "tibia_r", .meshFile = "tibia.stl", .mass = 2.304, .massCenter = {0.0265, -0.000025, 0.0112}, .inertia = {0.00231, 0.0136, 0.014, -0.00000564, 0.000977, 0.00000529}, .position = {0.005, -0.045, 0.095}, .orientation = {0, 0, pi/2}},
+					   /* Left femur */ {.name = "exo_femur_l", .parentBody = "femur_l", .meshFile = "femur.stl", .mass = 2.507, .massCenter = {-0.000102, 0.0987, 0.0119}, .inertia = {0.0707, 0.00232, 0.0711, 0.000107, -0.00000677, 0.00275}, .position = {0, 0.05, -0.1}, .orientation = {0, pi, pi}},
+					   /* Left tibia */ {.name = "exo_tibia_l", .parentBody = "tibia_l", .meshFile = "tibia.stl", .mass = 2.304, .massCenter = {0.0265, -0.000025, 0.0112}, .inertia = {0.00231, 0.0136, 0.014, -0.00000564, 0.000977, 0.00000529}, .position = {0.005, -0.045, -0.095}, .orientation = {0, pi, -pi/2}},
+	                                  };
 
 	for (const ExoskeletonPiece& piece : PIECES)
 	{
 		OpenSim::Mesh* mesh = new OpenSim::Mesh(piece.meshFile);
-		OpenSim::Body* body = new OpenSim::Body(piece.name + "_body", 
+		OpenSim::Body* body = new OpenSim::Body(piece.name, 
 			                                    piece.mass, 
 			                                    piece.massCenter,
 			                                    piece.inertia);
-		OpenSim::Joint* joint = new OpenSim::WeldJoint(piece.name + "_joint", 
+		OpenSim::Joint* joint = new OpenSim::WeldJoint(piece.name, 
 			                                           m_model.getBodySet().get(piece.parentBody),
-			                                           { 0, 0, 0 }, 
-			                                           { 0, 0, 0 }, 
-			                                           *body, 
 			                                           piece.position, 
+			                                           {0, 0, 0}, 
+			                                           *body, 
+			                                           {0, 0, 0},
 			                                           piece.orientation);
 
 		m_model.addBody(body);
@@ -106,10 +112,10 @@ void ModelBuilder::addActuators()
 		std::string actuatorName;
 	};
 
-	constexpr CoordinateActuatorPair PAIRS[] = { {"hip_flexion_r", "exo_hip_r"},
-											     {"hip_flexion_l", "exo_hip_l"},
-											     {"knee_angle_r", "exo_knee_r"}, 
-											     {"knee_angle_l", "exo_knee_l"}};
+	constexpr CoordinateActuatorPair PAIRS[] = { {.coordinateName = "hip_flexion_r", .actuatorName = "exo_hip_r"},
+											     {.coordinateName = "hip_flexion_l", .actuatorName = "exo_hip_l"},
+											     {.coordinateName = "knee_angle_r", .actuatorName = "exo_knee_r"},
+											     {.coordinateName = "knee_angle_l", .actuatorName = "exo_knee_l"}};
 
 	for (const CoordinateActuatorPair& pair : PAIRS)
 	{
