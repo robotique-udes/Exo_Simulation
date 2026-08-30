@@ -1,5 +1,7 @@
 # Exo_Simulation
 
+![OpenSim model wearing the exoskeleton](docs/multimedia/exoskeleton.png)
+
 ## Table of contents
 
 - [Description](#description)
