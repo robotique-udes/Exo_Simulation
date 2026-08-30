@@ -7,8 +7,6 @@
 */
 #include "ModelBuilder.hpp"
 #include <numbers>
-#include <OpenSim/Simulation/Model/Bhargava2004MuscleMetabolicsProbe.h>
-#include <OpenSim/Actuators/CoordinateActuator.h>
 
 ModelBuilder::ModelBuilder(const std::string& p_filename)
 {
@@ -37,19 +35,18 @@ void ModelBuilder::addMuscleMetabolicProbe()
 	const double slow_maintenance = defaultParameters.get_maintenance_constant_slow_twitch();
 	const double fast_maintenance = defaultParameters.get_maintenance_constant_fast_twitch();
 
-	// Ownerless object. Will be freed when program ends, same as in exampleHangingMuscle.cpp
-	auto probe = new OpenSim::Bhargava2004MuscleMetabolicsProbe();
-	probe->set_report_total_metabolics_only(false);
-	probe->setName("metabolics");
+	OpenSim::Bhargava2004MuscleMetabolicsProbe& probe = m_probes.emplace_back();
+	probe.set_report_total_metabolics_only(false);
+	probe.setName("metabolics");
 
 	const OpenSim::Set<OpenSim::Muscle>& muscles = m_model.getMuscles();
 	for(int i = 0; i < muscles.getSize(); ++ i)
 	{
 		const std::string& muscle = muscles[i].getName();
-		probe->addMuscle(muscle, 0.5, slow_activation, fast_activation, slow_maintenance, fast_maintenance);
+		probe.addMuscle(muscle, 0.5, slow_activation, fast_activation, slow_maintenance, fast_maintenance);
 	}
 
-	m_model.addProbe(probe);
+	m_model.addProbe(&probe);
 }
 
 void ModelBuilder::addExoskeleton()
@@ -82,22 +79,22 @@ void ModelBuilder::addExoskeleton()
 
 	for (const ExoskeletonPiece& piece : PIECES)
 	{
-		OpenSim::Mesh* mesh = new OpenSim::Mesh(piece.meshFile);
-		OpenSim::Body* body = new OpenSim::Body(piece.name, 
-			                                    piece.mass, 
-			                                    piece.massCenter,
-			                                    piece.inertia);
-		OpenSim::Joint* joint = new OpenSim::WeldJoint(piece.name, 
-			                                           m_model.getBodySet().get(piece.parentBody),
-			                                           piece.position, 
-			                                           {0, 0, 0}, 
-			                                           *body, 
-			                                           {0, 0, 0},
-			                                           piece.orientation);
+		OpenSim::Mesh& mesh = m_meshes.emplace_back(piece.meshFile);
+		OpenSim::Body& body = m_bodies.emplace_back(piece.name, 
+			                                       piece.mass, 
+			                                       piece.massCenter,
+			                                       piece.inertia);
+		OpenSim::WeldJoint& joint = m_joints.emplace_back(piece.name, 
+			                                              m_model.getBodySet().get(piece.parentBody),
+			                                              piece.position, 
+			                                              SimTK::Vec3(0, 0, 0), 
+			                                              body, 
+			                                              SimTK::Vec3(0, 0, 0),
+			                                              piece.orientation);
 
-		m_model.addBody(body);
-		m_model.addJoint(joint);
-		body->attachGeometry(mesh); // Called after Model::addBody to prevent "[error] Mesh xxx.stl not connected to a model...ignoring"
+		m_model.addBody(&body);
+		m_model.addJoint(&joint);
+		body.attachGeometry(&mesh); // Called after Model::addBody to prevent "[error] Mesh xxx.stl not connected to a model...ignoring"
 	}
 }
 
@@ -119,14 +116,13 @@ void ModelBuilder::addActuators()
 
 	for (const CoordinateActuatorPair& pair : PAIRS)
 	{
-		// Ownerless object. Will be freed when program ends, same as in exampleHangingMuscle.cpp
-		OpenSim::CoordinateActuator* actuator = new OpenSim::CoordinateActuator(pair.coordinateName);
-		actuator->setName(pair.actuatorName);
-		actuator->setOptimalForce(1.0);
-		actuator->setMinControl(-15.0);
-		actuator->setMaxControl(15.0);
+		OpenSim::CoordinateActuator& actuator = m_actuators.emplace_back(pair.coordinateName);
+		actuator.setName(pair.actuatorName);
+		actuator.setOptimalForce(1.0);
+		actuator.setMinControl(-15.0);
+		actuator.setMaxControl(15.0);
 
-		m_model.addForce(actuator);
+		m_model.addForce(&actuator);
 	}
 }
 

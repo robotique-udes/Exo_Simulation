@@ -11,7 +11,10 @@
 #define BIOGENIUS_SIMULATION_MODEL_BUILDER_HPP
 
 #include <OpenSim/OpenSim.h>
+#include <OpenSim/Simulation/Model/Bhargava2004MuscleMetabolicsProbe.h>
+#include <OpenSim/Actuators/CoordinateActuator.h>
 #include <string>
+#include <list>
 
 /**
  * @brief ModelBuilder takes a base model and has functions for adding the
@@ -59,6 +62,12 @@ public:
 
 private:
 	OpenSim::Model m_model; //< The model to modify
+
+	std::list<OpenSim::Bhargava2004MuscleMetabolicsProbe> m_probes;
+	std::list<OpenSim::Body> m_bodies;
+	std::list<OpenSim::WeldJoint> m_joints;
+	std::list<OpenSim::Mesh> m_meshes;
+	std::list<OpenSim::CoordinateActuator> m_actuators;
 };
 
 #endif
