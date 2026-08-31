@@ -8,10 +8,20 @@
 #include "ModelBuilder.hpp"
 #include <numbers>
 
-ModelBuilder::ModelBuilder(const std::string& p_filename)
+ModelBuilder::ModelBuilder(const std::string& p_filename) : m_model(p_filename)
+{
+
+}
+
+void ModelBuilder::setModel(const std::string& p_filename)
 {
 	m_model = OpenSim::Model(p_filename);
 	m_model.finalizeFromProperties(); // Make sure the model has full ownership of its subcomponents
+}
+
+void ModelBuilder::setModelName(const std::string& p_name)
+{
+	m_model.setName(p_name);
 }
 
 void ModelBuilder::print(const std::string& p_filename)
@@ -57,25 +67,25 @@ void ModelBuilder::addExoskeleton()
 	 */
 	struct ExoskeletonPiece
 	{
-		std::string name;
-		std::string parentBody;
-		std::string meshFile;
+		std::string name;        //< The name of the exeskeleton body
+		std::string parentBody;  //< The name of the body to weld the exoskeleton to
+		std::string meshFile;    //< The name of the STL file to use for the exoskeleton's geometry
 
-		double mass; // kilograms
-		SimTK::Vec3 massCenter; // meters
-		SimTK::Inertia inertia; // kilograms * meters squared
+		double mass;             //< The mass in kg
+		SimTK::Vec3 massCenter;  //< The center of mass relative to the origin of the piece, in meters
+		SimTK::Inertia inertia;  //< The inertia relative to the center of mass, in kg * m^2
 
-		SimTK::Vec3 position; // meters
-		SimTK::Vec3 orientation; // radians
+		SimTK::Vec3 position;    //< The position of the exoskeleton relative to the parent body, in meters
+		SimTK::Vec3 orientation; // The orientation of the exoskeleton relative to the parent body, in radians
 	};
 
 	using namespace std::numbers; // For easier access to pi
 	const ExoskeletonPiece PIECES[] = { 
 		                     /* Hips */ {.name = "exo_hip", .parentBody = "pelvis", .meshFile = "pelvis.stl", .mass = 3.915, .massCenter = {-0.00025, -0.0553, -0.000616}, .inertia = {0.0232, 0.0546, 0.0669, 0.0000792, 0.0015, 0.00191}, .position = {-0.3, -0.015, 0}, .orientation = {pi / 2, -pi / 2, 0.0}},
-					  /* Right femur */ {.name = "exo_femur_r", .parentBody = "femur_r", .meshFile = "femur.stl", .mass = 2.507, .massCenter = {-0.000102, 0.0987, 0.0119}, .inertia = {0.0707, 0.00232, 0.0711, 0.000107, -0.00000677, 0.00275}, .position = {0, 0.05, 0.1}, .orientation = {0, 0, pi}},
-					  /* Right tibia */ {.name = "exo_tibia_r", .parentBody = "tibia_r", .meshFile = "tibia.stl", .mass = 2.304, .massCenter = {0.0265, -0.000025, 0.0112}, .inertia = {0.00231, 0.0136, 0.014, -0.00000564, 0.000977, 0.00000529}, .position = {0.005, -0.045, 0.095}, .orientation = {0, 0, pi/2}},
-					   /* Left femur */ {.name = "exo_femur_l", .parentBody = "femur_l", .meshFile = "femur.stl", .mass = 2.507, .massCenter = {-0.000102, 0.0987, 0.0119}, .inertia = {0.0707, 0.00232, 0.0711, 0.000107, -0.00000677, 0.00275}, .position = {0, 0.05, -0.1}, .orientation = {0, pi, pi}},
-					   /* Left tibia */ {.name = "exo_tibia_l", .parentBody = "tibia_l", .meshFile = "tibia.stl", .mass = 2.304, .massCenter = {0.0265, -0.000025, 0.0112}, .inertia = {0.00231, 0.0136, 0.014, -0.00000564, 0.000977, 0.00000529}, .position = {0.005, -0.045, -0.095}, .orientation = {0, pi, -pi/2}},
+		              /* Right thigh */ {.name = "exo_thigh_r", .parentBody = "femur_r", .meshFile = "femur.stl", .mass = 2.507, .massCenter = {-0.000102, 0.0987, 0.0119}, .inertia = {0.0707, 0.00232, 0.0711, 0.000107, -0.00000677, 0.00275}, .position = {0, 0.05, 0.1}, .orientation = {0, 0, pi}},
+		              /* Right shank */ {.name = "exo_shank_r", .parentBody = "tibia_r", .meshFile = "tibia.stl", .mass = 2.304, .massCenter = {0.0265, -0.000025, 0.0112}, .inertia = {0.00231, 0.0136, 0.014, -0.00000564, 0.000977, 0.00000529}, .position = {0.005, -0.045, 0.095}, .orientation = {0, 0, pi / 2}},
+		               /* Left thigh */ {.name = "exo_thigh_l", .parentBody = "femur_l", .meshFile = "femur.stl", .mass = 2.507, .massCenter = {-0.000102, 0.0987, 0.0119}, .inertia = {0.0707, 0.00232, 0.0711, 0.000107, -0.00000677, 0.00275}, .position = {0, 0.05, -0.1}, .orientation = {0, pi, pi}},
+		               /* Left shank */ {.name = "exo_shank_l", .parentBody = "tibia_l", .meshFile = "tibia.stl", .mass = 2.304, .massCenter = {0.0265, -0.000025, 0.0112}, .inertia = {0.00231, 0.0136, 0.014, -0.00000564, 0.000977, 0.00000529}, .position = {0.005, -0.045, -0.095}, .orientation = {0, pi, -pi / 2}},
 	                                  };
 
 	for (const ExoskeletonPiece& piece : PIECES)
@@ -106,14 +116,14 @@ void ModelBuilder::addActuators()
 	 */
 	struct CoordinateActuatorPair
 	{
-		std::string coordinateName;
-		std::string actuatorName;
+		std::string actuatorName;   //< The name of the actuator/motor
+		std::string coordinateName; //< The name of the coordinate the actuator will be attached to
 	};
 
-	constexpr CoordinateActuatorPair PAIRS[] = { {.coordinateName = "hip_flexion_r", .actuatorName = "exo_hip_r"},
-											     {.coordinateName = "hip_flexion_l", .actuatorName = "exo_hip_l"},
-											     {.coordinateName = "knee_angle_r", .actuatorName = "exo_knee_r"},
-											     {.coordinateName = "knee_angle_l", .actuatorName = "exo_knee_l"}};
+	const CoordinateActuatorPair PAIRS[] = { {.actuatorName = "exo_hip_motor_r", .coordinateName = "hip_flexion_r"},
+											 {.actuatorName = "exo_hip_motor_l", .coordinateName = "hip_flexion_l"},
+											 {.actuatorName = "exo_knee_motor_r", .coordinateName = "knee_angle_r"},
+											 {.actuatorName = "exo_knee_motor_l", .coordinateName = "knee_angle_l"} };
 
 	for (const CoordinateActuatorPair& pair : PAIRS)
 	{

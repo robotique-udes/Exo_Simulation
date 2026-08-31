@@ -26,10 +26,27 @@ class ModelBuilder
 {
 public:
 	/**
+	 * @brief Default constructs every member
+	 */
+	ModelBuilder() = default;
+
+	/**
 	 * @brief Initialize the model from a base model
 	 * @param filename The path to the base model
 	 */
 	ModelBuilder(const std::string& filename);
+
+	/**
+	 * @brief Set the model to use as a base model and load it
+	 * @param filename The path to the base model
+	 */
+	void setModel(const std::string& filename);
+
+	/**
+	 * @brief Change the name of the model being built
+	 * @param name The new name of the model
+	 */
+	void setModelName(const std::string& name);
 
 	/**
 	 * @brief Save the current state of the model to a XML file
