@@ -139,5 +139,35 @@ void ModelBuilder::addActuators()
 
 void ModelBuilder::addIMU()
 {
+	/**
+	 * @brief Local POD struct for attaching an IMU to a Body
+	 */
+	struct BIMU
+	{
+		std::string name;       //< The name of the BIMU
+		std::string parentBody; //< The name of the body to attach the BIMU to
+		SimTK::Vec3 position;   //< The position of the BIMU relative to the parent body
+	};
 
+	const BIMU bimus[] = { {.name = "imu_back", .parentBody = "torso", .position = {-0.125, 0.1, 0.15}},
+		                   {.name = "imu_thigh_r", .parentBody = "femur_r", .position = {0, -0.35, 0.11}},
+		                   {.name = "imu_thigh_l", .parentBody = "femur_l", .position = {0, -0.35, -0.11}},
+						   {.name = "imu_shank_r", .parentBody = "tibia_r", .position = {0.005, -0.4, 0.1}},
+						   {.name = "imu_shank_l", .parentBody = "tibia_l", .position = {0.005, -0.4, -0.1}} };
+
+	for (const BIMU& bimu : bimus)
+	{
+		OpenSim::IMU& imu = m_sensors.emplace_back();
+		OpenSim::Body& parent = m_model.updBodySet().get(bimu.parentBody);
+		OpenSim::PhysicalOffsetFrame& frame = m_offsets.emplace_back(bimu.name + "_frame",
+			                                                         parent,
+			                                                         SimTK::Transform(bimu.position));
+
+		imu.setName(bimu.name);
+		imu.connectSocket_frame(frame);
+		parent.addComponent(&frame);
+		m_model.addComponent(&imu);
+	}
+
+	// Add IMU Placer
 }
