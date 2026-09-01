@@ -46,18 +46,18 @@ void ModelBuilder::addMuscleMetabolicProbe()
 	const double slow_maintenance = defaultParameters.get_maintenance_constant_slow_twitch();
 	const double fast_maintenance = defaultParameters.get_maintenance_constant_fast_twitch();
 
-	OpenSim::Bhargava2004MuscleMetabolicsProbe& probe = m_probes.emplace_back();
-	probe.set_report_total_metabolics_only(false);
-	probe.setName("metabolics");
+	OpenSim::Bhargava2004MuscleMetabolicsProbe* probe = new OpenSim::Bhargava2004MuscleMetabolicsProbe();
+	probe->set_report_total_metabolics_only(false);
+	probe->setName("metabolics");
 
 	const OpenSim::Set<OpenSim::Muscle>& muscles = m_model->getMuscles();
 	for(int i = 0; i < muscles.getSize(); ++ i)
 	{
 		const std::string& muscle = muscles[i].getName();
-		probe.addMuscle(muscle, 0.5, slow_activation, fast_activation, slow_maintenance, fast_maintenance);
+		probe->addMuscle(muscle, 0.5, slow_activation, fast_activation, slow_maintenance, fast_maintenance);
 	}
 
-	m_model->addProbe(&probe);
+	m_model->addProbe(probe);
 }
 
 void ModelBuilder::addExoskeleton()
@@ -90,22 +90,22 @@ void ModelBuilder::addExoskeleton()
 
 	for (const ExoskeletonPiece& piece : PIECES)
 	{
-		OpenSim::Mesh& mesh = m_meshes.emplace_back(piece.meshFile);
-		OpenSim::Body& body = m_bodies.emplace_back(piece.name, 
-			                                       piece.mass, 
-			                                       piece.massCenter,
-			                                       piece.inertia);
-		OpenSim::WeldJoint& joint = m_joints.emplace_back(piece.name, 
-			                                              m_model->getBodySet().get(piece.parentBody),
-			                                              piece.position, 
-			                                              SimTK::Vec3(0, 0, 0), 
-			                                              body, 
-			                                              SimTK::Vec3(0, 0, 0),
-			                                              piece.orientation);
+		OpenSim::Mesh* mesh = new OpenSim::Mesh(piece.meshFile);
+		OpenSim::Body* body = new OpenSim::Body(piece.name, 
+			                                    piece.mass, 
+			                                    piece.massCenter,
+			                                    piece.inertia);
+		OpenSim::WeldJoint* joint = new OpenSim::WeldJoint(piece.name, 
+			                                               m_model->getBodySet().get(piece.parentBody),
+			                                               piece.position, 
+			                                               SimTK::Vec3(0, 0, 0), 
+			                                               *body, 
+			                                               SimTK::Vec3(0, 0, 0),
+			                                               piece.orientation);
 
-		m_model->addBody(&body);
-		m_model->addJoint(&joint);
-		body.attachGeometry(&mesh); // Called after Model::addBody to prevent "[error] Mesh xxx.stl not connected to a model...ignoring"
+		m_model->addBody(body);
+		m_model->addJoint(joint);
+		body->attachGeometry(mesh); // Called after Model::addBody to prevent "[error] Mesh xxx.stl not connected to a model...ignoring"
 	}
 }
 
@@ -127,13 +127,13 @@ void ModelBuilder::addActuators()
 
 	for (const CoordinateActuatorPair& pair : PAIRS)
 	{
-		OpenSim::CoordinateActuator& actuator = m_actuators.emplace_back(pair.coordinateName);
-		actuator.setName(pair.actuatorName);
-		actuator.setOptimalForce(1.0);
-		actuator.setMinControl(-15.0);
-		actuator.setMaxControl(15.0);
+		OpenSim::CoordinateActuator* actuator = new OpenSim::CoordinateActuator(pair.coordinateName);
+		actuator->setName(pair.actuatorName);
+		actuator->setOptimalForce(1.0);
+		actuator->setMinControl(-15.0);
+		actuator->setMaxControl(15.0);
 
-		m_model->addForce(&actuator);
+		m_model->addForce(actuator);
 	}
 }
 
@@ -157,16 +157,16 @@ void ModelBuilder::addIMU()
 
 	for (const BIMU& bimu : bimus)
 	{
-		OpenSim::IMU& imu = m_sensors.emplace_back();
 		OpenSim::Body& parent = m_model->updBodySet().get(bimu.parentBody);
-		OpenSim::PhysicalOffsetFrame& frame = m_offsets.emplace_back(bimu.name + "_frame",
-			                                                         parent,
-			                                                         SimTK::Transform(bimu.position));
+		OpenSim::IMU* imu = new OpenSim::IMU();
+		OpenSim::PhysicalOffsetFrame* frame = new OpenSim::PhysicalOffsetFrame(bimu.name + "_frame",
+			                                                                   parent,
+			                                                                   SimTK::Transform(bimu.position));
 
-		imu.setName(bimu.name);
-		imu.connectSocket_frame(frame);
-		parent.addComponent(&frame);
-		m_model->addComponent(&imu);
+		imu->setName(bimu.name);
+		imu->connectSocket_frame(*frame);
+		parent.addComponent(frame);
+		m_model->addComponent(imu);
 	}
 
 	// Add IMU Placer

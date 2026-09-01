@@ -17,7 +17,6 @@
 #include <OpenSim/Actuators/CoordinateActuator.h>
 #include <memory>
 #include <string>
-#include <list>
 
 /**
  * @brief ModelBuilder takes a base model and has functions for adding the
@@ -82,15 +81,6 @@ public:
 
 private:
 	std::unique_ptr<OpenSim::Model> m_model; //< The model to modify
-
-	// Store components in lists to avoid ownerless heap-allocated objects
-	std::list<OpenSim::Bhargava2004MuscleMetabolicsProbe> m_probes;
-	std::list<OpenSim::Body> m_bodies;
-	std::list<OpenSim::WeldJoint> m_joints;
-	std::list<OpenSim::Mesh> m_meshes;
-	std::list<OpenSim::CoordinateActuator> m_actuators;
-	std::list<OpenSim::PhysicalOffsetFrame> m_offsets;
-	std::list<OpenSim::IMU> m_sensors;
 };
 
 #endif
