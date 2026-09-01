@@ -145,37 +145,31 @@ void ModelBuilder::addIMU()
 	 */
 	struct BIMU
 	{
-		std::string name;       //< The name of the BIMU
-		std::string parentBody; //< The name of the body to attach the BIMU to
-		SimTK::Vec3 position;   //< The position of the BIMU relative to the parent body
+		std::string name;        //< The name of the BIMU
+		std::string parentBody;  //< The name of the body to attach the BIMU to
+		SimTK::Vec3 position;    //< The position of the BIMU relative to the parent body
+		SimTK::Vec3 orientation; //< The orientation of the BIMU relative to the parent body
 	};
 
-	const BIMU bimus[] = { {.name = "imu_back", .parentBody = "torso", .position = {-0.125, 0.1, 0.15}},
-		                   {.name = "imu_thigh_r", .parentBody = "femur_r", .position = {0, -0.35, 0.11}},
-		                   {.name = "imu_thigh_l", .parentBody = "femur_l", .position = {0, -0.35, -0.11}},
-						   {.name = "imu_shank_r", .parentBody = "tibia_r", .position = {0.005, -0.4, 0.1}},
-						   {.name = "imu_shank_l", .parentBody = "tibia_l", .position = {0.005, -0.4, -0.1}} };
+	const BIMU bimus[] = { {.name = "imu_back", .parentBody = "torso", .position = {-0.125, 0.1, 0.15}, .orientation = {0, 0, 0}},
+		                   {.name = "imu_thigh_r", .parentBody = "femur_r", .position = {0, -0.35, 0.11}, .orientation = {0, 0, 0}},
+		                   {.name = "imu_thigh_l", .parentBody = "femur_l", .position = {0, -0.35, -0.11}, .orientation = {0, 0, 0}},
+						   {.name = "imu_shank_r", .parentBody = "tibia_r", .position = {0.005, -0.4, 0.1}, .orientation = {0, 0, 0}},
+						   {.name = "imu_shank_l", .parentBody = "tibia_l", .position = {0.005, -0.4, -0.1}, .orientation = {0, 0, 0}} };
 
 	for (const BIMU& bimu : bimus)
 	{
+		SimTK::Rotation rotation;
+		rotation.setRotationToBodyFixedXYZ(bimu.orientation);
 		OpenSim::Body& parent = m_model->updBodySet().get(bimu.parentBody);
 		OpenSim::IMU* imu = new OpenSim::IMU();
 		OpenSim::PhysicalOffsetFrame* frame = new OpenSim::PhysicalOffsetFrame(bimu.name + "_frame",
 			                                                                   parent,
-			                                                                   SimTK::Transform(bimu.position));
+			                                                                   SimTK::Transform(rotation, bimu.position));
 
 		imu->setName(bimu.name);
 		imu->connectSocket_frame(*frame);
 		parent.addComponent(frame);
-		m_model->addComponent(imu);
+		m_model->addModelComponent(imu);
 	}
-
-	// Add IMU Placer
-	OpenSim::IMUPlacer placer;
-	placer.setModel(*m_model);
-	placer.set_orientation_file_for_calibration("Config/imu_orientations.sto");
-	placer.set_sensor_to_opensim_rotations(SimTK::Vec3(0, 0, 0));
-	placer.run();
-
-	m_model = std::unique_ptr<OpenSim::Model>(placer.getCalibratedModel().clone());
 }
