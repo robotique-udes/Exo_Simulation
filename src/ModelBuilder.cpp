@@ -8,34 +8,34 @@
 #include "ModelBuilder.hpp"
 #include <numbers>
 
-ModelBuilder::ModelBuilder(const std::string& p_filename) : m_model(p_filename)
+ModelBuilder::ModelBuilder(const std::string& p_filename)
 {
-
+	setModel(p_filename);
 }
 
 void ModelBuilder::setModel(const std::string& p_filename)
 {
-	m_model = OpenSim::Model(p_filename);
-	m_model.finalizeFromProperties(); // Make sure the model has full ownership of its subcomponents
+	m_model = std::unique_ptr<OpenSim::Model>(new OpenSim::Model(p_filename));
+	m_model->finalizeFromProperties(); // Make sure the model has full ownership of its subcomponents
 }
 
 void ModelBuilder::setModelName(const std::string& p_name)
 {
-	m_model.setName(p_name);
+	m_model->setName(p_name);
 }
 
 void ModelBuilder::print(const std::string& p_filename)
 {
-	m_model.finalizeConnections();
-	m_model.print(p_filename);
+	m_model->finalizeConnections();
+	m_model->print(p_filename);
 }
 
 void ModelBuilder::visualize()
 {
-	m_model.setUseVisualizer(true);
+	m_model->setUseVisualizer(true);
 
-	SimTK::State& state = m_model.initSystem();
-	m_model.getVisualizer().show(state);
+	SimTK::State& state = m_model->initSystem();
+	m_model->getVisualizer().show(state);
 }
 
 void ModelBuilder::addMuscleMetabolicProbe()
@@ -50,14 +50,14 @@ void ModelBuilder::addMuscleMetabolicProbe()
 	probe.set_report_total_metabolics_only(false);
 	probe.setName("metabolics");
 
-	const OpenSim::Set<OpenSim::Muscle>& muscles = m_model.getMuscles();
+	const OpenSim::Set<OpenSim::Muscle>& muscles = m_model->getMuscles();
 	for(int i = 0; i < muscles.getSize(); ++ i)
 	{
 		const std::string& muscle = muscles[i].getName();
 		probe.addMuscle(muscle, 0.5, slow_activation, fast_activation, slow_maintenance, fast_maintenance);
 	}
 
-	m_model.addProbe(&probe);
+	m_model->addProbe(&probe);
 }
 
 void ModelBuilder::addExoskeleton()
@@ -96,15 +96,15 @@ void ModelBuilder::addExoskeleton()
 			                                       piece.massCenter,
 			                                       piece.inertia);
 		OpenSim::WeldJoint& joint = m_joints.emplace_back(piece.name, 
-			                                              m_model.getBodySet().get(piece.parentBody),
+			                                              m_model->getBodySet().get(piece.parentBody),
 			                                              piece.position, 
 			                                              SimTK::Vec3(0, 0, 0), 
 			                                              body, 
 			                                              SimTK::Vec3(0, 0, 0),
 			                                              piece.orientation);
 
-		m_model.addBody(&body);
-		m_model.addJoint(&joint);
+		m_model->addBody(&body);
+		m_model->addJoint(&joint);
 		body.attachGeometry(&mesh); // Called after Model::addBody to prevent "[error] Mesh xxx.stl not connected to a model...ignoring"
 	}
 }
@@ -133,7 +133,7 @@ void ModelBuilder::addActuators()
 		actuator.setMinControl(-15.0);
 		actuator.setMaxControl(15.0);
 
-		m_model.addForce(&actuator);
+		m_model->addForce(&actuator);
 	}
 }
 
@@ -158,7 +158,7 @@ void ModelBuilder::addIMU()
 	for (const BIMU& bimu : bimus)
 	{
 		OpenSim::IMU& imu = m_sensors.emplace_back();
-		OpenSim::Body& parent = m_model.updBodySet().get(bimu.parentBody);
+		OpenSim::Body& parent = m_model->updBodySet().get(bimu.parentBody);
 		OpenSim::PhysicalOffsetFrame& frame = m_offsets.emplace_back(bimu.name + "_frame",
 			                                                         parent,
 			                                                         SimTK::Transform(bimu.position));
@@ -166,7 +166,7 @@ void ModelBuilder::addIMU()
 		imu.setName(bimu.name);
 		imu.connectSocket_frame(frame);
 		parent.addComponent(&frame);
-		m_model.addComponent(&imu);
+		m_model->addComponent(&imu);
 	}
 
 	// Add IMU Placer

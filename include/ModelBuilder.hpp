@@ -15,6 +15,7 @@
 #include <OpenSim/Simulation/SimbodyEngine/WeldJoint.h>
 #include <OpenSim/Simulation/OpenSense/IMU.h>
 #include <OpenSim/Actuators/CoordinateActuator.h>
+#include <memory>
 #include <string>
 #include <list>
 
@@ -80,7 +81,7 @@ public:
 	void addIMU();
 
 private:
-	OpenSim::Model m_model; //< The model to modify
+	std::unique_ptr<OpenSim::Model> m_model; //< The model to modify
 
 	// Store components in lists to avoid ownerless heap-allocated objects
 	std::list<OpenSim::Bhargava2004MuscleMetabolicsProbe> m_probes;
