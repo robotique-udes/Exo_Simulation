@@ -6,6 +6,7 @@
  * @date 2026-08-25
 */
 #include "ModelBuilder.hpp"
+#include <OpenSim/Simulation/OpenSense/IMUPlacer.h>
 #include <numbers>
 
 ModelBuilder::ModelBuilder(const std::string& p_filename)
@@ -170,4 +171,11 @@ void ModelBuilder::addIMU()
 	}
 
 	// Add IMU Placer
+	OpenSim::IMUPlacer placer;
+	placer.setModel(*m_model);
+	placer.set_orientation_file_for_calibration("Config/imu_orientations.sto");
+	placer.set_sensor_to_opensim_rotations(SimTK::Vec3(0, 0, 0));
+	placer.run();
+
+	m_model = std::unique_ptr<OpenSim::Model>(placer.getCalibratedModel().clone());
 }

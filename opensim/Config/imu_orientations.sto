@@ -1,0 +1,10 @@
+DataRate=100.000000
+DataType=Quaternion
+version=3
+OpenSimVersion=4.6
+
+The template for this file comes from https://github.com/opensim-org/opensim-models/blob/master/Tutorials/Inverese_Kinematics_with_IMUs/placement_orientations.sto
+
+endheader
+time	torso_imu	femur_r_imu	femur_l_imu	tibia_r_imu	tibia_l_imu
+0	0.707,0,0,0.707	0.707,0,0,0.707	0.707,0,0,0.707	0.707,0,0,0.707	0.707,0,0,0.707
