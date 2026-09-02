@@ -6,7 +6,6 @@
  * @date 2026-08-25
 */
 #include "ModelBuilder.hpp"
-#include <OpenSim/Simulation/OpenSense/IMUPlacer.h>
 #include <numbers>
 
 ModelBuilder::ModelBuilder(const std::string& p_filename)
@@ -171,5 +170,16 @@ void ModelBuilder::addIMU()
 		imu->connectSocket_frame(*frame);
 		parent.addComponent(frame);
 		m_model->addModelComponent(imu);
+
+	// Print the orientation of each IMU as a quaternion
+	m_model->finalizeConnections();
+	SimTK::State& state = m_model->initSystem();
+	m_model->realizeAcceleration(state);
+
+	for (const BIMU& bimu : bimus)
+	{
+		const OpenSim::IMU& imu = m_model->getComponent<OpenSim::IMU>("/componentset/" + bimu.name);
+		SimTK::Quaternion orientation = imu.getOutputValue<SimTK::Quaternion>(state, "orientation_as_quaternion");
+		std::cout << std::format("[info] {}: {}\n", bimu.name, orientation.toString());
 	}
 }
