@@ -15,7 +15,7 @@ ModelBuilder::ModelBuilder(const std::string& p_filename)
 
 void ModelBuilder::setModel(const std::string& p_filename)
 {
-	m_model = std::unique_ptr<OpenSim::Model>(new OpenSim::Model(p_filename));
+	m_model = std::make_unique<OpenSim::Model>(p_filename);
 	m_model->finalizeFromProperties(); // Make sure the model has full ownership of its subcomponents
 }
 
@@ -40,13 +40,13 @@ void ModelBuilder::visualize()
 
 void ModelBuilder::addMuscleMetabolicProbe()
 {
-	auto defaultParameters = OpenSim::Bhargava2004MuscleMetabolicsProbe_MetabolicMuscleParameter();
+	const auto defaultParameters = OpenSim::Bhargava2004MuscleMetabolicsProbe_MetabolicMuscleParameter();
 	const double slow_activation = defaultParameters.get_activation_constant_slow_twitch();
 	const double fast_activation = defaultParameters.get_activation_constant_fast_twitch();
 	const double slow_maintenance = defaultParameters.get_maintenance_constant_slow_twitch();
 	const double fast_maintenance = defaultParameters.get_maintenance_constant_fast_twitch();
 
-	OpenSim::Bhargava2004MuscleMetabolicsProbe* probe = new OpenSim::Bhargava2004MuscleMetabolicsProbe();
+	auto probe = std::make_unique<OpenSim::Bhargava2004MuscleMetabolicsProbe>();
 	probe->set_report_total_metabolics_only(false);
 	probe->setName("metabolics");
 
@@ -57,7 +57,7 @@ void ModelBuilder::addMuscleMetabolicProbe()
 		probe->addMuscle(muscle, 0.5, slow_activation, fast_activation, slow_maintenance, fast_maintenance);
 	}
 
-	m_model->addProbe(probe);
+	m_model->addProbe(probe.release());
 }
 
 void ModelBuilder::addExoskeleton()
@@ -90,22 +90,22 @@ void ModelBuilder::addExoskeleton()
 
 	for (const ExoskeletonPiece& piece : PIECES)
 	{
-		OpenSim::Mesh* mesh = new OpenSim::Mesh(piece.meshFile);
-		OpenSim::Body* body = new OpenSim::Body(piece.name, 
-			                                    piece.mass, 
-			                                    piece.massCenter,
-			                                    piece.inertia);
-		OpenSim::WeldJoint* joint = new OpenSim::WeldJoint(piece.name, 
-			                                               m_model->getBodySet().get(piece.parentBody),
-			                                               piece.position, 
-			                                               SimTK::Vec3(0, 0, 0), 
-			                                               *body, 
-			                                               SimTK::Vec3(0, 0, 0),
-			                                               piece.orientation);
+		std::unique_ptr<OpenSim::Mesh> mesh = std::make_unique<OpenSim::Mesh>(piece.meshFile);
+		std::unique_ptr<OpenSim::Body> body = std::make_unique<OpenSim::Body>(piece.name, 
+			                                                                  piece.mass, 
+			                                                                  piece.massCenter,
+			                                                                  piece.inertia);
+		std::unique_ptr<OpenSim::WeldJoint> joint = std::make_unique<OpenSim::WeldJoint>(piece.name, 
+			                                                                             m_model->getBodySet().get(piece.parentBody),
+			                                                                             piece.position, 
+			                                                                             SimTK::Vec3(0, 0, 0), 
+			                                                                             *body, 
+			                                                                             SimTK::Vec3(0, 0, 0),
+			                                                                             piece.orientation);
 
-		m_model->addBody(body);
-		m_model->addJoint(joint);
-		body->attachGeometry(mesh); // Called after Model::addBody to prevent "[error] Mesh xxx.stl not connected to a model...ignoring"
+		body->attachGeometry(mesh.release()); // Called after Model::addBody to prevent "[error] Mesh xxx.stl not connected to a model...ignoring"
+		m_model->addBody(body.release());
+		m_model->addJoint(joint.release());
 	}
 }
 
@@ -127,13 +127,13 @@ void ModelBuilder::addActuators()
 
 	for (const CoordinateActuatorPair& pair : PAIRS)
 	{
-		OpenSim::CoordinateActuator* actuator = new OpenSim::CoordinateActuator(pair.coordinateName);
+		std::unique_ptr<OpenSim::CoordinateActuator> actuator = std::make_unique<OpenSim::CoordinateActuator>(pair.coordinateName);
 		actuator->setName(pair.actuatorName);
 		actuator->setOptimalForce(1.0);
 		actuator->setMinControl(-15.0);
 		actuator->setMaxControl(15.0);
 
-		m_model->addForce(actuator);
+		m_model->addForce(actuator.release());
 	}
 }
 
@@ -150,26 +150,28 @@ void ModelBuilder::addIMU()
 		SimTK::Vec3 orientation; //< The orientation of the BIMU relative to the parent body
 	};
 
+	using namespace std::numbers; // For easier access to pi
 	const BIMU bimus[] = { {.name = "imu_back", .parentBody = "torso", .position = {-0.125, 0.1, 0.15}, .orientation = {0, 0, 0}},
-		                   {.name = "imu_thigh_r", .parentBody = "femur_r", .position = {0, -0.35, 0.11}, .orientation = {0, 0, 0}},
-		                   {.name = "imu_thigh_l", .parentBody = "femur_l", .position = {0, -0.35, -0.11}, .orientation = {0, 0, 0}},
-						   {.name = "imu_shank_r", .parentBody = "tibia_r", .position = {0.005, -0.4, 0.1}, .orientation = {0, 0, 0}},
-						   {.name = "imu_shank_l", .parentBody = "tibia_l", .position = {0.005, -0.4, -0.1}, .orientation = {0, 0, 0}} };
+		                   {.name = "imu_thigh_r", .parentBody = "femur_r", .position = {0, -0.35, 0.11}, .orientation = {0, 0, pi/2}},
+		                   {.name = "imu_thigh_l", .parentBody = "femur_l", .position = {0, -0.35, -0.11}, .orientation = {0, 0, pi/2}},
+						   {.name = "imu_shank_r", .parentBody = "tibia_r", .position = {0.005, -0.4, 0.1}, .orientation = {0, 0, pi/2}},
+						   {.name = "imu_shank_l", .parentBody = "tibia_l", .position = {0.005, -0.4, -0.1}, .orientation = {0, 0, pi/2}} };
 
 	for (const BIMU& bimu : bimus)
 	{
 		SimTK::Rotation rotation;
 		rotation.setRotationToBodyFixedXYZ(bimu.orientation);
 		OpenSim::Body& parent = m_model->updBodySet().get(bimu.parentBody);
-		OpenSim::IMU* imu = new OpenSim::IMU();
-		OpenSim::PhysicalOffsetFrame* frame = new OpenSim::PhysicalOffsetFrame(bimu.name + "_frame",
-			                                                                   parent,
-			                                                                   SimTK::Transform(rotation, bimu.position));
+		std::unique_ptr<OpenSim::IMU> imu = std::make_unique<OpenSim::IMU>();
+		std::unique_ptr<OpenSim::PhysicalOffsetFrame> frame = std::make_unique<OpenSim::PhysicalOffsetFrame>(bimu.name + "_frame",
+			                                                                                                 parent,
+			                                                                                                 SimTK::Transform(rotation, bimu.position));
 
 		imu->setName(bimu.name);
 		imu->connectSocket_frame(*frame);
-		parent.addComponent(frame);
-		m_model->addModelComponent(imu);
+		parent.addComponent(frame.release());
+		m_model->addModelComponent(imu.release());
+	}
 
 	// Print the orientation of each IMU as a quaternion
 	m_model->finalizeConnections();
