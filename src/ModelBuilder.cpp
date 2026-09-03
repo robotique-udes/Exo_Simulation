@@ -67,16 +67,16 @@ void ModelBuilder::addExoskeleton()
 	 */
 	struct ExoskeletonPiece
 	{
-		std::string name;        //< The name of the exeskeleton body
-		std::string parentBody;  //< The name of the body to weld the exoskeleton to
-		std::string meshFile;    //< The name of the STL file to use for the exoskeleton's geometry
+		std::string name;        ///< The name of the exeskeleton body
+		std::string parentBody;  ///< The name of the body to weld the exoskeleton to
+		std::string meshFile;    ///< The name of the STL file to use for the exoskeleton's geometry
 
-		double mass;             //< The mass in kg
-		SimTK::Vec3 massCenter;  //< The center of mass relative to the origin of the piece, in meters
-		SimTK::Inertia inertia;  //< The inertia relative to the center of mass, in kg * m^2
+		double mass;             ///< The mass in kg
+		SimTK::Vec3 massCenter;  ///< The center of mass relative to the origin of the piece, in meters
+		SimTK::Inertia inertia;  ///< The inertia relative to the center of mass, in kg * m^2
 
-		SimTK::Vec3 position;    //< The position of the exoskeleton relative to the parent body, in meters
-		SimTK::Vec3 orientation; // The orientation of the exoskeleton relative to the parent body, in radians
+		SimTK::Vec3 position;    ///< The position of the exoskeleton relative to the parent body, in meters
+		SimTK::Vec3 orientation; ///< The orientation of the exoskeleton relative to the parent body, in radians
 	};
 
 	using namespace std::numbers; // For easier access to pi
@@ -116,8 +116,8 @@ void ModelBuilder::addActuators()
 	 */
 	struct CoordinateActuatorPair
 	{
-		std::string actuatorName;   //< The name of the actuator/motor
-		std::string coordinateName; //< The name of the coordinate the actuator will be attached to
+		std::string actuatorName;   ///< The name of the actuator/motor
+		std::string coordinateName; ///< The name of the coordinate the actuator will be attached to
 	};
 
 	const CoordinateActuatorPair PAIRS[] = { {.actuatorName = "exo_hip_motor_r", .coordinateName = "hip_flexion_r"},
@@ -144,10 +144,10 @@ void ModelBuilder::addIMU()
 	 */
 	struct BIMU
 	{
-		std::string name;        //< The name of the BIMU
-		std::string parentBody;  //< The name of the body to attach the BIMU to
-		SimTK::Vec3 position;    //< The position of the BIMU relative to the parent body
-		SimTK::Vec3 orientation; //< The orientation of the BIMU relative to the parent body
+		std::string name;        ///< The name of the BIMU
+		std::string parentBody;  ///< The name of the body to attach the BIMU to
+		SimTK::Vec3 position;    ///< The position of the BIMU relative to the parent body
+		SimTK::Vec3 orientation; ///< The orientation of the BIMU relative to the parent body
 	};
 
 	using namespace std::numbers; // For easier access to pi

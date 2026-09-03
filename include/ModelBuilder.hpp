@@ -80,7 +80,7 @@ public:
 	void addIMU();
 
 private:
-	std::unique_ptr<OpenSim::Model> m_model; //< The model to modify
+	std::unique_ptr<OpenSim::Model> m_model; ///< The model to modify
 };
 
 #endif
