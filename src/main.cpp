@@ -19,12 +19,11 @@ int main()
 		OpenSim::ModelVisualizer::addDirToGeometrySearchPaths(std::string(OPENSIM_ROOT_DIR) + "/Geometry");
 		
 		ModelBuilder builder("Model/gait2354_simbody.osim");
-		builder.setModelName("BioGenius2026");
 		builder.addIMU();
 		builder.addMuscleMetabolicProbe();
 		builder.addExoskeleton();
 		builder.addActuators();
-		builder.visualize();
+		builder.setModelName("BioGenius2026");
 		builder.print("Results/biogenius2026.osim");
 	}
 	catch(const std::exception& e) 
