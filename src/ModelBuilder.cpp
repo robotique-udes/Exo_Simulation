@@ -152,10 +152,10 @@ void ModelBuilder::addIMU()
 
 	using namespace std::numbers; // For easier access to pi
 	const BIMU bimus[] = { {.name = "imu_back", .parentBody = "torso", .position = {-0.125, 0.1, 0.15}, .orientation = {0, 0, 0}},
-		                   {.name = "imu_thigh_r", .parentBody = "femur_r", .position = {0, -0.35, 0.11}, .orientation = {0, 0, pi/2}},
-		                   {.name = "imu_thigh_l", .parentBody = "femur_l", .position = {0, -0.35, -0.11}, .orientation = {0, 0, pi/2}},
-						   {.name = "imu_shank_r", .parentBody = "tibia_r", .position = {0.005, -0.4, 0.1}, .orientation = {0, 0, pi/2}},
-						   {.name = "imu_shank_l", .parentBody = "tibia_l", .position = {0.005, -0.4, -0.1}, .orientation = {0, 0, pi/2}} };
+		                   {.name = "imu_thigh_r", .parentBody = "femur_r", .position = {0, -0.35, 0.11}, .orientation = {0, 0, 0}},
+		                   {.name = "imu_thigh_l", .parentBody = "femur_l", .position = {0, -0.35, -0.11}, .orientation = {0, 0, 0}},
+						   {.name = "imu_shank_r", .parentBody = "tibia_r", .position = {0.005, -0.4, 0.1}, .orientation = {0, 0, 0}},
+						   {.name = "imu_shank_l", .parentBody = "tibia_l", .position = {0.005, -0.4, -0.1}, .orientation = {0, 0, 0}} };
 
 	for (const BIMU& bimu : bimus)
 	{
@@ -166,7 +166,6 @@ void ModelBuilder::addIMU()
 		std::unique_ptr<OpenSim::PhysicalOffsetFrame> frame = std::make_unique<OpenSim::PhysicalOffsetFrame>(bimu.name + "_frame",
 			                                                                                                 parent,
 			                                                                                                 SimTK::Transform(rotation, bimu.position));
-
 		imu->setName(bimu.name);
 		imu->connectSocket_frame(*frame);
 		parent.addComponent(frame.release());
