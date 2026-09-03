@@ -90,20 +90,20 @@ void ModelBuilder::addExoskeleton()
 
 	for (const ExoskeletonPiece& piece : PIECES)
 	{
-		std::unique_ptr<OpenSim::Mesh> mesh = std::make_unique<OpenSim::Mesh>(piece.meshFile);
-		std::unique_ptr<OpenSim::Body> body = std::make_unique<OpenSim::Body>(piece.name, 
-			                                                                  piece.mass, 
-			                                                                  piece.massCenter,
-			                                                                  piece.inertia);
-		std::unique_ptr<OpenSim::WeldJoint> joint = std::make_unique<OpenSim::WeldJoint>(piece.name, 
-			                                                                             m_model->getBodySet().get(piece.parentBody),
-			                                                                             piece.position, 
-			                                                                             SimTK::Vec3(0, 0, 0), 
-			                                                                             *body, 
-			                                                                             SimTK::Vec3(0, 0, 0),
-			                                                                             piece.orientation);
+		auto mesh = std::make_unique<OpenSim::Mesh>(piece.meshFile);
+		auto body = std::make_unique<OpenSim::Body>(piece.name, 
+			                                        piece.mass, 
+			                                        piece.massCenter,
+			                                        piece.inertia);
+		auto joint = std::make_unique<OpenSim::WeldJoint>(piece.name, 
+			                                              m_model->getBodySet().get(piece.parentBody),
+			                                              piece.position, 
+			                                              SimTK::Vec3(0, 0, 0), 
+			                                              *body, 
+			                                              SimTK::Vec3(0, 0, 0),
+			                                              piece.orientation);
 
-		body->attachGeometry(mesh.release()); // Called after Model::addBody to prevent "[error] Mesh xxx.stl not connected to a model...ignoring"
+		body->attachGeometry(mesh.release()); // "[error] Mesh xxx.stl not connected to a model...ignoring" can be ignored and as no effect
 		m_model->addBody(body.release());
 		m_model->addJoint(joint.release());
 	}
@@ -127,7 +127,7 @@ void ModelBuilder::addActuators()
 
 	for (const CoordinateActuatorPair& pair : PAIRS)
 	{
-		std::unique_ptr<OpenSim::CoordinateActuator> actuator = std::make_unique<OpenSim::CoordinateActuator>(pair.coordinateName);
+		auto actuator = std::make_unique<OpenSim::CoordinateActuator>(pair.coordinateName);
 		actuator->setName(pair.actuatorName);
 		actuator->setOptimalForce(1.0);
 		actuator->setMinControl(-15.0);
@@ -162,10 +162,10 @@ void ModelBuilder::addIMU()
 		SimTK::Rotation rotation;
 		rotation.setRotationToBodyFixedXYZ(bimu.orientation);
 		OpenSim::Body& parent = m_model->updBodySet().get(bimu.parentBody);
-		std::unique_ptr<OpenSim::IMU> imu = std::make_unique<OpenSim::IMU>();
-		std::unique_ptr<OpenSim::PhysicalOffsetFrame> frame = std::make_unique<OpenSim::PhysicalOffsetFrame>(bimu.name + "_frame",
-			                                                                                                 parent,
-			                                                                                                 SimTK::Transform(rotation, bimu.position));
+		auto imu = std::make_unique<OpenSim::IMU>();
+		auto frame = std::make_unique<OpenSim::PhysicalOffsetFrame>(bimu.name + "_frame",
+			                                                        parent,
+			                                                        SimTK::Transform(rotation, bimu.position));
 		imu->setName(bimu.name);
 		imu->connectSocket_frame(*frame);
 		parent.addComponent(frame.release());
