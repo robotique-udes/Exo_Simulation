@@ -32,9 +32,9 @@ git clone https://github.com/robotique-udes/Exo_Simulation.git
 cd Exo_Simulation
 ```
 
-Generate the project using CMake or CMake GUI
+Generate the project using CMake CLI or CMake GUI
 
-<u>CMake</u>
+<u>CMake CLI</u>
 ```bash
 mkdir build && cd build
 cmake ..
@@ -75,6 +75,8 @@ All contributors must read and follow the [C++ guidelines](docs/articles/code_gu
 
 [OpenSim Wiki](https://opensimconfluence.atlassian.net/wiki/spaces/OpenSim/overview), the [User's Guide](https://opensimconfluence.atlassian.net/wiki/spaces/OpenSim/pages/53089849/User+s+Guide) in particular, for a general understanding of the components and tools of OpenSim.
 
-[OpenSim C++ API](https://simtk.org/api_docs/opensim/api_docs46/index.html) for detailed documentation of the classes and methods of OpenSim and SimTK.
+[OpenSim C++ API](https://simtk.org/api_docs/opensim/api_docs46/index.html) for detailed documentation of the classes and methods of OpenSim.
+
+[SimTK C++ API](https://simtk.org/api_docs/api_docs15/hierarchy.html) for detailed documentation of the classes and methods of SimTK.
 
 [cppreference](https://cppreference.com/) for information on the C++ language and standard library. Keep in mind this project uses <u>C++20</u>.
