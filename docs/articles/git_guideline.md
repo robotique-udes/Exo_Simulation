@@ -17,7 +17,7 @@ Toutes les branches sont créées à partir de `dev`. Une fois complétée, la b
 
 ## Commits
 
-Chaque commit doit avoir un des préfixe suivant:
+Chaque commit doit avoir un des préfixe suivant: \
 `feat: ` - Ajout d'une fonctionnalité \
 `docs: ` - Ajout ou modification de documentation \
 `refactor: ` - Modification d'une fonctionnalité existante \
