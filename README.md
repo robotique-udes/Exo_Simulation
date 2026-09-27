@@ -71,6 +71,10 @@ All contributors must read and follow the [C++ guidelines](docs/articles/code_gu
 	- Results: Simulation results. NOT TRACKED BY GIT
 - build: Build directory. NOT TRACKED BY GIT
 
+### Pipeline
+
+![IDEF0 diagram of the simulation pipeline](docs/multimedia/simulation_pipeline_idef0.svg)
+
 ### Documentation
 
 [OpenSim Wiki](https://opensimconfluence.atlassian.net/wiki/spaces/OpenSim/overview), the [User's Guide](https://opensimconfluence.atlassian.net/wiki/spaces/OpenSim/pages/53089849/User+s+Guide) in particular, for a general understanding of the components and tools of OpenSim.
