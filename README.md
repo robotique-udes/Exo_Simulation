@@ -9,6 +9,7 @@
 - [Contributing](#contributing)
 	- [Guidelines](#guidelines)
 	- [Folder overview](#folder-overview)
+	- [Pipeline](#pipeline)
 	- [Documentation](#documentation)
 
 ## Description
