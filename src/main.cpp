@@ -11,6 +11,8 @@
 #include <chrono>
 #include <format>
 
+#include "RRAImplementation.hpp"
+
 int main()
 {
 	try
@@ -18,7 +20,6 @@ int main()
 		std::filesystem::create_directory("Results");
 		OpenSim::ModelVisualizer::addDirToGeometrySearchPaths("Geometry");
 		OpenSim::ModelVisualizer::addDirToGeometrySearchPaths(std::string(OPENSIM_ROOT_DIR) + "/Geometry");
-		
 
 		std::cout << "Hello World!" << std::endl;
 	}
