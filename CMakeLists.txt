@@ -34,6 +34,9 @@ target_link_libraries(simulation ${OpenSim_LIBRARIES})
 # Add the header files to the included directories
 target_include_directories(simulation PRIVATE "${CMAKE_SOURCE_DIR}/include")
 
+# Precompile <OpenSim/OpenSim.h>
+target_precompile_headers(simulation PRIVATE <OpenSim/OpenSim.h>)
+
 # Tell Visual Studio to make our project the startup project
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT simulation)
 
