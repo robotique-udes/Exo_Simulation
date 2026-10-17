@@ -6,13 +6,7 @@
  * @date 2026-08-25
 */
 #include "ModelBuilder.hpp"
-#include <OpenSim/Simulation/Model/Bhargava2004MuscleMetabolicsProbe.h>
-#include <OpenSim/Simulation/SimbodyEngine/WeldJoint.h>
-#include <OpenSim/Simulation/OpenSense/IMU.h>
-#include <OpenSim/Actuators/CoordinateActuator.h>
 #include <pugixml.hpp>
-
-#include <numbers>
 
 SimTK::Vec3 ModelBuilder::stringToVec3(const std::string& raw)
 {

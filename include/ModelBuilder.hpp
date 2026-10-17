@@ -10,7 +10,7 @@
 #ifndef BIOGENIUS_SIMULATION_MODEL_BUILDER_HPP
 #define BIOGENIUS_SIMULATION_MODEL_BUILDER_HPP
 
-#include <OpenSim/Simulation/Model/Model.h>
+#include <OpenSim/OpenSim.h>
 #include <memory>
 #include <string>
 
