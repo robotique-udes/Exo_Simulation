@@ -156,7 +156,7 @@
 				<!--The name of the parent body to attach the IMU to-->
 				<parent>femur_l</parent>
 				<!--The position of the IMU relative to the parent body in meters-->
-				<position>0 -0.35 0.-11</position>
+				<position>0 -0.35 -0.11</position>
 				<!--The rotation of the IMU relative to the parent body in radians-->
 				<orientation>0 0 0</orientation>
 			</IMU>
