@@ -6,22 +6,131 @@
  * @date 2026-08-25
 */
 #include "ModelBuilder.hpp"
+#include <OpenSim/Simulation/Model/Bhargava2004MuscleMetabolicsProbe.h>
+#include <OpenSim/Simulation/SimbodyEngine/WeldJoint.h>
+#include <OpenSim/Simulation/OpenSense/IMU.h>
+#include <OpenSim/Actuators/CoordinateActuator.h>
+#include <pugixml.hpp>
+
 #include <numbers>
 
-ModelBuilder::ModelBuilder(const std::string& p_filename)
+SimTK::Vec3 ModelBuilder::stringToVec3(const std::string& raw)
 {
-	setModel(p_filename);
+	double components[3];
+	std::size_t currentIndex = 0;
+	std::size_t nextWhiteSpace = 0;
+
+	for (std::size_t i = 0; i < 3; ++i)
+	{
+		currentIndex = nextWhiteSpace;
+		nextWhiteSpace = raw.find_first_of(' ', currentIndex + 1);
+		components[i] = std::stod(raw.substr(currentIndex, nextWhiteSpace - currentIndex));
+	}
+
+	return SimTK::Vec3(components[0], components[1], components[2]);
 }
 
-void ModelBuilder::setModel(const std::string& p_filename)
+SimTK::Inertia ModelBuilder::stringToInertia(const std::string& raw)
 {
-	m_model = std::make_unique<OpenSim::Model>(p_filename);
+	double components[6];
+	std::size_t currentIndex = 0;
+	std::size_t nextWhiteSpace = 0;
+
+	for (std::size_t i = 0; i < 6; ++i)
+	{
+		currentIndex = nextWhiteSpace;
+		nextWhiteSpace = raw.find_first_of(' ', currentIndex + 1);
+		components[i] = std::stod(raw.substr(currentIndex, nextWhiteSpace - currentIndex));
+	}
+
+	return SimTK::Inertia(components[0], components[1], components[2], components[3], components[4], components[5]);
+}
+
+ModelBuilder::ModelBuilder(const std::string& p_modelFileName, const std::string& p_componentsFileName) noexcept
+{
+	setModelFileName(p_modelFileName);
+	setComponentsFileName(p_componentsFileName);
+}
+
+void ModelBuilder::setModelFileName(const std::string& p_filename) noexcept
+{
+	m_modelFileName = p_filename;
+}
+
+void ModelBuilder::setComponentsFileName(const std::string& p_filename) noexcept
+{
+	m_componentsFileName = p_filename;
+}
+
+void ModelBuilder::run()
+{
+	// Load the base model
+	m_model = std::make_unique<OpenSim::Model>(m_modelFileName);
 	m_model->finalizeFromProperties(); // Make sure the model has full ownership of its subcomponents
-}
 
-void ModelBuilder::setModelName(const std::string& p_name)
-{
-	m_model->setName(p_name);
+	// Load the components file
+	pugi::xml_document doc;
+	pugi::xml_parse_result result = doc.load_file(m_componentsFileName.c_str());
+	if (!result)
+	{
+		throw std::runtime_error(std::format("{}:{}\n{}", m_componentsFileName, result.offset, result.description()));
+	}
+
+	pugi::xml_node builder = doc.child("SimulationDocument").child("ModelBuilder");
+
+	// Set model name
+	const char* modelName = builder.attribute("name").value();
+	setModelName(modelName);
+
+	// Add the exoskeleton
+	for (pugi::xml_node& exoskeleton : builder.child("ExoskeletonSet").children())
+	{
+		std::string name = exoskeleton.child_value("name");
+		std::string parentBody = exoskeleton.child_value("parent");
+		std::string meshFile = exoskeleton.child_value("mesh");
+		double mass = std::stod(exoskeleton.child_value("mass"));
+		SimTK::Vec3 massCenter = stringToVec3(exoskeleton.child_value("mass_center"));
+		SimTK::Inertia inertia = stringToInertia(exoskeleton.child_value("inertia"));
+		SimTK::Vec3 position = stringToVec3(exoskeleton.child_value("position"));
+		SimTK::Vec3 orientation = stringToVec3(exoskeleton.child_value("orientation"));
+
+		addExoskeleton(name,
+			           parentBody,
+			           meshFile,
+			           mass,
+			           massCenter,
+			           inertia,
+			           position,
+			           orientation);
+	}
+
+	// Add the motors
+	for (pugi::xml_node& motor : builder.child("MotorSet").children())
+	{
+		std::string name = motor.child_value("name");
+		std::string coordinate = motor.child_value("coordinate");
+
+		addMotor(name, coordinate);
+	}
+
+	// Add the IMUs
+	for (pugi::xml_node& imu : builder.child("IMUSet").children())
+	{
+		std::string name = imu.child_value("name");
+		std::string parent = imu.child_value("parent");
+		SimTK::Vec3 position = stringToVec3(imu.child_value("position"));
+		SimTK::Vec3 orientation = stringToVec3(imu.child_value("orientation"));
+
+		addIMU(name, parent, position, orientation);
+	}
+
+	// Add the probes
+	for (pugi::xml_node& imu : builder.child("ProbeSet").children())
+	{
+		std::string name = imu.child_value("name");
+
+		addMuscleMetabolicProbe(name);
+	}
 }
 
 void ModelBuilder::print(const std::string& p_filename)
@@ -38,7 +147,12 @@ void ModelBuilder::visualize()
 	m_model->getVisualizer().show(state);
 }
 
-void ModelBuilder::addMuscleMetabolicProbe()
+void ModelBuilder::setModelName(const std::string& p_name)
+{
+	m_model->setName(p_name);
+}
+
+void ModelBuilder::addMuscleMetabolicProbe(const std::string& p_name)
 {
 	const auto defaultParameters = OpenSim::Bhargava2004MuscleMetabolicsProbe_MetabolicMuscleParameter();
 	const double slow_activation = defaultParameters.get_activation_constant_slow_twitch();
@@ -48,7 +162,7 @@ void ModelBuilder::addMuscleMetabolicProbe()
 
 	auto probe = std::make_unique<OpenSim::Bhargava2004MuscleMetabolicsProbe>();
 	probe->set_report_total_metabolics_only(false);
-	probe->setName("metabolics");
+	probe->setName(p_name);
 
 	const OpenSim::Set<OpenSim::Muscle>& muscles = m_model->getMuscles();
 	for(int i = 0; i < muscles.getSize(); ++ i)
@@ -60,127 +174,68 @@ void ModelBuilder::addMuscleMetabolicProbe()
 	m_model->addProbe(probe.release());
 }
 
-void ModelBuilder::addExoskeleton()
+void ModelBuilder::addExoskeleton(const std::string& p_name, 
+	                              const std::string& p_parentBody,
+	                              const std::string& p_meshFile,
+	                              double p_mass,
+	                              SimTK::Vec3 p_massCenter,
+	                              SimTK::Inertia p_inertia,
+	                              SimTK::Vec3 p_position,
+	                              SimTK::Vec3 p_orientation)
 {
-	/**
-	 * @brief Local POD struct for creating the pieces of the exoskeleton
-	 */
-	struct ExoskeletonPiece
-	{
-		std::string name;        ///< The name of the exeskeleton body
-		std::string parentBody;  ///< The name of the body to weld the exoskeleton to
-		std::string meshFile;    ///< The name of the STL file to use for the exoskeleton's geometry
+	auto mesh = std::make_unique<OpenSim::Mesh>(p_meshFile);
+	auto body = std::make_unique<OpenSim::Body>(p_name, 
+												p_mass, 
+												p_massCenter,
+												p_inertia);
+	auto joint = std::make_unique<OpenSim::WeldJoint>(p_name, 
+														m_model->getBodySet().get(p_parentBody),
+														p_position, 
+														SimTK::Vec3(0, 0, 0), 
+														*body, 
+														SimTK::Vec3(0, 0, 0),
+														p_orientation);
 
-		double mass;             ///< The mass in kg
-		SimTK::Vec3 massCenter;  ///< The center of mass relative to the origin of the piece, in meters
-		SimTK::Inertia inertia;  ///< The inertia relative to the center of mass, in kg * m^2
-
-		SimTK::Vec3 position;    ///< The position of the exoskeleton relative to the parent body, in meters
-		SimTK::Vec3 orientation; ///< The orientation of the exoskeleton relative to the parent body, in radians
-	};
-
-	using namespace std::numbers; // For easier access to pi
-	const ExoskeletonPiece PIECES[] = { 
-		                     /* Hips */ {.name = "exo_hip", .parentBody = "pelvis", .meshFile = "pelvis.stl", .mass = 3.915, .massCenter = {-0.00025, -0.0553, -0.000616}, .inertia = {0.0232, 0.0546, 0.0669, 0.0000792, 0.0015, 0.00191}, .position = {-0.3, -0.015, 0}, .orientation = {pi / 2, -pi / 2, 0.0}},
-		              /* Right thigh */ {.name = "exo_thigh_r", .parentBody = "femur_r", .meshFile = "femur.stl", .mass = 2.507, .massCenter = {-0.000102, 0.0987, 0.0119}, .inertia = {0.0707, 0.00232, 0.0711, 0.000107, -0.00000677, 0.00275}, .position = {0, 0.05, 0.1}, .orientation = {0, 0, pi}},
-		              /* Right shank */ {.name = "exo_shank_r", .parentBody = "tibia_r", .meshFile = "tibia.stl", .mass = 2.304, .massCenter = {0.0265, -0.000025, 0.0112}, .inertia = {0.00231, 0.0136, 0.014, -0.00000564, 0.000977, 0.00000529}, .position = {0.005, -0.045, 0.095}, .orientation = {0, 0, pi / 2}},
-		               /* Left thigh */ {.name = "exo_thigh_l", .parentBody = "femur_l", .meshFile = "femur.stl", .mass = 2.507, .massCenter = {-0.000102, 0.0987, 0.0119}, .inertia = {0.0707, 0.00232, 0.0711, 0.000107, -0.00000677, 0.00275}, .position = {0, 0.05, -0.1}, .orientation = {0, pi, pi}},
-		               /* Left shank */ {.name = "exo_shank_l", .parentBody = "tibia_l", .meshFile = "tibia.stl", .mass = 2.304, .massCenter = {0.0265, -0.000025, 0.0112}, .inertia = {0.00231, 0.0136, 0.014, -0.00000564, 0.000977, 0.00000529}, .position = {0.005, -0.045, -0.095}, .orientation = {0, pi, -pi / 2}},
-	                                  };
-
-	for (const ExoskeletonPiece& piece : PIECES)
-	{
-		auto mesh = std::make_unique<OpenSim::Mesh>(piece.meshFile);
-		auto body = std::make_unique<OpenSim::Body>(piece.name, 
-			                                        piece.mass, 
-			                                        piece.massCenter,
-			                                        piece.inertia);
-		auto joint = std::make_unique<OpenSim::WeldJoint>(piece.name, 
-			                                              m_model->getBodySet().get(piece.parentBody),
-			                                              piece.position, 
-			                                              SimTK::Vec3(0, 0, 0), 
-			                                              *body, 
-			                                              SimTK::Vec3(0, 0, 0),
-			                                              piece.orientation);
-
-		body->attachGeometry(mesh.release()); // "[error] Mesh xxx.stl not connected to a model...ignoring" can be ignored and as no effect
-		m_model->addBody(body.release());
-		m_model->addJoint(joint.release());
-	}
+	body->attachGeometry(mesh.release()); // "[error] Mesh xxx.stl not connected to a model...ignoring" can be ignored and has no effect
+	m_model->addBody(body.release());
+	m_model->addJoint(joint.release());
 }
 
-void ModelBuilder::addActuators()
+void ModelBuilder::addMotor(const std::string& p_motorName, const std::string& p_coordinateName)
 {
-	/**
-	 * @brief Local POD struct for attaching a CoordinateActuator to a Coordinate
-	 */
-	struct CoordinateActuatorPair
-	{
-		std::string actuatorName;   ///< The name of the actuator/motor
-		std::string coordinateName; ///< The name of the coordinate the actuator will be attached to
-	};
+	auto actuator = std::make_unique<OpenSim::CoordinateActuator>(p_coordinateName);
+	actuator->setName(p_motorName);
+	actuator->setOptimalForce(1.0);
+	actuator->setMinControl(-15.0);
+	actuator->setMaxControl(15.0);
 
-	const CoordinateActuatorPair PAIRS[] = { {.actuatorName = "exo_hip_motor_r", .coordinateName = "hip_flexion_r"},
-											 {.actuatorName = "exo_hip_motor_l", .coordinateName = "hip_flexion_l"},
-											 {.actuatorName = "exo_knee_motor_r", .coordinateName = "knee_angle_r"},
-											 {.actuatorName = "exo_knee_motor_l", .coordinateName = "knee_angle_l"} };
-
-	for (const CoordinateActuatorPair& pair : PAIRS)
-	{
-		auto actuator = std::make_unique<OpenSim::CoordinateActuator>(pair.coordinateName);
-		actuator->setName(pair.actuatorName);
-		actuator->setOptimalForce(1.0);
-		actuator->setMinControl(-15.0);
-		actuator->setMaxControl(15.0);
-
-		m_model->addForce(actuator.release());
-	}
+	m_model->addForce(actuator.release());
 }
 
-void ModelBuilder::addIMU()
+void ModelBuilder::addIMU(const std::string& p_name,
+	                      const std::string& p_parent,
+	                      SimTK::Vec3 p_position,
+	                      SimTK::Vec3 p_orientation)
 {
-	/**
-	 * @brief Local POD struct for attaching an IMU to a Body
-	 */
-	struct BIMU
-	{
-		std::string name;        ///< The name of the BIMU
-		std::string parentBody;  ///< The name of the body to attach the BIMU to
-		SimTK::Vec3 position;    ///< The position of the BIMU relative to the parent body
-		SimTK::Vec3 orientation; ///< The orientation of the BIMU relative to the parent body
-	};
+	// Add the IMU to the model
+	SimTK::Rotation rotation;
+	rotation.setRotationToBodyFixedXYZ(p_orientation);
+	OpenSim::Body& parent = m_model->updBodySet().get(p_parent);
+	auto imu = std::make_unique<OpenSim::IMU>();
+	auto frame = std::make_unique<OpenSim::PhysicalOffsetFrame>(p_name + "_frame",
+			                                                    parent,
+			                                                    SimTK::Transform(rotation, p_position));
+	imu->setName(p_name);
+	imu->connectSocket_frame(*frame);
+	parent.addComponent(frame.release());
+	m_model->addModelComponent(imu.release());
 
-	using namespace std::numbers; // For easier access to pi
-	const BIMU bimus[] = { {.name = "imu_back", .parentBody = "torso", .position = {-0.125, 0.1, 0.15}, .orientation = {0, 0, 0}},
-		                   {.name = "imu_thigh_r", .parentBody = "femur_r", .position = {0, -0.35, 0.11}, .orientation = {0, 0, 0}},
-		                   {.name = "imu_thigh_l", .parentBody = "femur_l", .position = {0, -0.35, -0.11}, .orientation = {0, 0, 0}},
-						   {.name = "imu_shank_r", .parentBody = "tibia_r", .position = {0.005, -0.4, 0.1}, .orientation = {0, 0, 0}},
-						   {.name = "imu_shank_l", .parentBody = "tibia_l", .position = {0.005, -0.4, -0.1}, .orientation = {0, 0, 0}} };
-
-	for (const BIMU& bimu : bimus)
-	{
-		SimTK::Rotation rotation;
-		rotation.setRotationToBodyFixedXYZ(bimu.orientation);
-		OpenSim::Body& parent = m_model->updBodySet().get(bimu.parentBody);
-		auto imu = std::make_unique<OpenSim::IMU>();
-		auto frame = std::make_unique<OpenSim::PhysicalOffsetFrame>(bimu.name + "_frame",
-			                                                        parent,
-			                                                        SimTK::Transform(rotation, bimu.position));
-		imu->setName(bimu.name);
-		imu->connectSocket_frame(*frame);
-		parent.addComponent(frame.release());
-		m_model->addModelComponent(imu.release());
-	}
-
-	// Print the orientation of each IMU as a quaternion
+	// Print the orientation of the IMU as a quaternion
 	m_model->finalizeConnections();
 	SimTK::State& state = m_model->initSystem();
 	m_model->realizeAcceleration(state);
 
-	for (const BIMU& bimu : bimus)
-	{
-		const OpenSim::IMU& imu = m_model->getComponent<OpenSim::IMU>("/componentset/" + bimu.name);
-		SimTK::Quaternion orientation = imu.getOutputValue<SimTK::Quaternion>(state, "orientation_as_quaternion");
-		std::cout << std::format("[info] {}: {}\n", bimu.name, orientation.toString());
-	}
+	const OpenSim::IMU& ref = m_model->getComponent<OpenSim::IMU>("/componentset/" + p_name);
+	SimTK::Quaternion orientation = ref.getOutputValue<SimTK::Quaternion>(state, "orientation_as_quaternion");
+	std::cout << std::format("[info] {}: {}\n", p_name, orientation.toString());
 }
