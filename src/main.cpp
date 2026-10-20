@@ -5,10 +5,9 @@
  * @author Samuel Savaria
  * @date 2026-08-21
 */
-#include <OpenSim/OpenSim.h>
+#include "ModelBuilder.hpp"
 #include <filesystem>
 #include <iostream>
-#include <chrono>
 #include <format>
 
 int main()
@@ -19,18 +18,13 @@ int main()
 		OpenSim::ModelVisualizer::addDirToGeometrySearchPaths("Geometry");
 		OpenSim::ModelVisualizer::addDirToGeometrySearchPaths(std::string(OPENSIM_ROOT_DIR) + "/Geometry");
 		
-
-		std::cout << "Hello World!" << std::endl;
+		ModelBuilder builder("Model/gait2354_simbody.osim", "Config/biogenius2026_components.xml");
+		builder.run();
+		builder.print("Results/biogenius2026_simbody.osim");
 	}
 	catch(const std::exception& e) 
 	{
-		// To-Do: Turn this into dedicated logging function
-		std::string timestamp = std::format("{:%F %T}", std::chrono::system_clock::now());
-		std::string type = typeid(e).name();
-		std::string message = e.what();
-
-        std::cerr << '[' << timestamp << "] [error] Aborting after catching an unhandled '" << type << "':" << std::endl;
-		std::cerr << message << std::endl;
+		std::cerr << std::format("[error] Aborting after catching an unhandled '{}':\n{}\n", typeid(e).name(), e.what());
 
         return 1;
 	}
